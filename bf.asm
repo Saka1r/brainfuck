@@ -88,7 +88,6 @@ cmd_dot:
     push rsi
     push rdx
 
-
 	mov rax, 1 ; sys_write
 	mov rdi, 1 ; stdout
 	mov rsi, rbx ; address
@@ -106,13 +105,106 @@ cmd_dot:
     jmp     next_instruction
 
 cmd_comma: 
-    jmp     next_instruction
 
-cmd_open_bracket: 
-    jmp     next_instruction
+	push rax
+    push rbx
+    push rcx
+    push r11
+    push rdi
+    push rsi
+    push rdx
 
-cmd_close_bracket: 
-    jmp     next_instruction
+	mov rax, 0 ;sys_read
+	mov rdi, 0 ;stdin
+	mov rsi, rbx
+	mov rdx, 1 ; one byte
+	syscall
+	
+	pop rdx
+    pop rsi
+    pop rdi
+    pop r11
+    pop rcx
+    pop rbx
+    pop rax	
+
+	jmp     next_instruction
+
+find_open:
+    dec r14 
+    
+    cmp r14, code
+    jl exit_program         
+    
+    movzx rax, byte [r14]
+    
+    cmp al, ']'
+    je inc_depth_back      
+    
+    cmp al, '['
+    je dec_depth_back      
+    
+    jmp find_open
+
+inc_depth_back:
+    inc r13
+    jmp find_open
+
+dec_depth_back:
+    dec r13
+    cmp r13, 0
+    je found_match
+    jmp find_open
+
+skip_bracket:
+    jmp next_instruction
+
+inc_depth:
+    inc r13                
+    jmp find_close
+
+dec_depth:
+    dec r13                
+    cmp r13, 0
+    je found_match      
+    jmp find_close
+
+found_match:
+    mov rcx, r14
+	dec rcx                
+    jmp next_instruction
+
+find_close:
+    inc r14                
+    
+    cmp r14, r12
+    jge exit_program       
+    
+    movzx rax, byte [r14]  
+    
+    cmp al, '['
+    je inc_depth          
+    
+    cmp al, ']'
+    je dec_depth          
+    
+    jmp find_close        
+
+cmd_open_bracket:
+	cmp byte [rbx], 0
+	jne skip_bracket
+
+	mov r13, 1
+	mov r14, rcx
+	jmp find_close
+
+cmd_close_bracket:
+	cmp byte [rbx], 0
+    je skip_bracket       
+    
+    mov r13, 1             
+    mov r14, rcx
+	jmp find_open
 
 next_instruction:
     inc rcx 
