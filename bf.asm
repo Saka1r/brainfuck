@@ -5,7 +5,7 @@
 DEFAULT REL
 
 section .bss
-    tape		resb 30000 ; Лента данных
+    tape		resb 300000 ; Лента данных
     code		resb 65536 ; Буфер для исх. кода
     code_len	resq 1 ; Длина прочитанного кода
 
@@ -62,14 +62,25 @@ main_loop:
     jmp	next_instruction
 
 cmd_right:
-    ; TODO: проверить, не вышли ли за конец ленты
     inc rbx
-    jmp     next_instruction
+    lea rax, [rel tape + 300000]
+    cmp rbx, rax
+    jb next_instruction
+    ; Если вышли за границу — выходим с ошибкой
+    mov rax, 60
+    mov rdi, 1
+    syscall
 
 cmd_left:
-    ; TODO: проверить, не вышли ли за начало ленты
     dec rbx
-    jmp     next_instruction
+	; Проверка: rbx >= tape
+    lea rax, [rel tape]
+    cmp rbx, rax
+    jae next_instruction
+    ; Если вышли за границу — выходим с ошибкой
+    mov rax, 60
+    mov rdi, 1
+	syscall
 
 cmd_plus:
     add byte [rbx], 1
