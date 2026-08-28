@@ -21,8 +21,6 @@ _start:
 
     mov [code_len], rax
 
-    mov [code_len], rax
-
     mov rbx, tape ;data pointer
     mov rcx, code ;instruction pointer
     mov r12, [code_len]
